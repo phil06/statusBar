@@ -30,7 +30,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = NSImage(named: NSImage.Name("dictionary_512"))
             button.action = #selector(toggleViewMenu(_:))
             button.target = self
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            button.sendAction(on: [.rightMouseUp])
+            
+            let gesture = NSPressGestureRecognizer(target: self, action: #selector(handlePressGesture))
+            button.addGestureRecognizer(gesture)
+            
+            let clickLeftGesture = NSClickGestureRecognizer(target: self, action: #selector(handleClickGesture))
+            button.addGestureRecognizer(clickLeftGesture)
         }
         
         popover.contentViewController = SearchViewController.initialLoad()
@@ -42,39 +48,54 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
     }
     
-    @objc func toggleViewMenu(_ sender: Any?) {
-   
-        if NSApp.currentEvent!.type == NSEvent.EventType.leftMouseUp {
-            
-            prevAction = ACTION_TYPE.VIEW
-            
-            if popover.isShown {
-                closePopover(sender: nil)
-            } else {
-                showPopover(sender: nil)
-            }
-        } else {
-            
-            if prevAction ?? ACTION_TYPE.MENU == ACTION_TYPE.VIEW {
-                closePopover(sender: nil)
-            }
-            
-            let button = statusItem.button!
-            let x = button.frame.origin.x
-            let y = button.frame.origin.y - 5
-            let location = button.superview!.convert(NSMakePoint(x, y), to: nil)
-            let w = button.window!
-            let event = NSEvent.mouseEvent(with: .rightMouseUp,
-                                           location: location,
-                                           modifierFlags: NSEvent.ModifierFlags(rawValue: 0),
-                                           timestamp: 0,
-                                           windowNumber: w.windowNumber,
-                                           context: nil,
-                                           eventNumber: 0,
-                                           clickCount: 1,
-                                           pressure: 0)!
-            NSMenu.popUpContextMenu(menu, with: event, for: button)
+    @objc func handlePressGesture(_ recognizer: NSPressGestureRecognizer) {
+        
+        if recognizer.state == .ended {
+            showMenu()
         }
+        
+    }
+    
+    @objc func handleClickGesture(_ recognizer: NSClickGestureRecognizer) {
+        
+        prevAction = ACTION_TYPE.VIEW
+        
+        if popover.isShown {
+            closePopover(sender: nil)
+        } else {
+            showPopover(sender: nil)
+        }
+        
+    }
+    
+    @objc func toggleViewMenu(_ sender: Any?) {
+
+        if NSApp.currentEvent!.type == NSEvent.EventType.rightMouseUp {
+            showMenu()
+        }
+    }
+    
+    private func showMenu() {
+        
+        if prevAction ?? ACTION_TYPE.MENU == ACTION_TYPE.VIEW {
+            closePopover(sender: nil)
+        }
+        
+        let button = statusItem.button!
+        let x = button.frame.origin.x
+        let y = button.frame.origin.y - 5
+        let location = button.superview!.convert(NSMakePoint(x, y), to: nil)
+        let w = button.window!
+        let event = NSEvent.mouseEvent(with: .rightMouseUp,
+                                       location: location,
+                                       modifierFlags: NSEvent.ModifierFlags(rawValue: 0),
+                                       timestamp: 0,
+                                       windowNumber: w.windowNumber,
+                                       context: nil,
+                                       eventNumber: 0,
+                                       clickCount: 1,
+                                       pressure: 0)!
+        NSMenu.popUpContextMenu(menu, with: event, for: button)
     }
   
     func showPopover(sender: Any?) {
